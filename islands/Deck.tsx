@@ -39,6 +39,7 @@ const codes = [
 export default function Deck(props: { code: string; cards: CardsMap }) {
   const [deck, setDeck] = useState<{ card: Card; qty: number }[]>([]);
   const [deckCode, setDeckCode] = useState("");
+  const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
     setCode(props.code);
@@ -53,8 +54,9 @@ export default function Deck(props: { code: string; cards: CardsMap }) {
         })
       );
       setDeckCode(code);
+      setIsValid(true);
     } catch (error) {
-      console.error("why");
+      setIsValid(false);
     }
   };
 
@@ -64,43 +66,67 @@ export default function Deck(props: { code: string; cards: CardsMap }) {
     setCode(currentTarget.value);
   };
 
+  const copyTextToClipboard = ({
+    currentTarget,
+  }: h.JSX.TargetedEvent<HTMLInputElement, Event>) => {
+    if (isValid) {
+      currentTarget.select();
+      if ("clipboard" in navigator) {
+        return navigator.clipboard.writeText("( ͡❛ ͜ʖ ͡❛)");
+      } else {
+        return document.execCommand("copy", true, "( ͡❛ ͜ʖ ͡❛)");
+      }
+    }
+  };
+
   return (
     <Fragment>
-      <input
-        placeholder="Paste a code..."
-        onInput={handleCode}
-        class={tw`w-full mb-4 border p-1`}
-        type="text"
-      />
-      <div class={tw`flex`}>
-        <div class={tw`flex flex-col space-y-1 border p-1 flex-1 mr-4`}>
-          {deck.map(({ card, qty }) => (
-            <div
-              class={tw`h-10 w-full flex items-center text-gray-100 bg-gray-800 hover:bg-gray-600`}
-            >
-              <p class={tw`font-semibold w-8/12 truncate px-2`}>{card.name}</p>
-              <p class={tw`pr-2 text-xs`}>x{qty}</p>
+      <div>
+        <input
+          placeholder="Paste a code..."
+          onInput={handleCode}
+          onClick={copyTextToClipboard}
+          value={deckCode}
+          class={tw`w-full border p-1 ${
+            isValid ? "border-green-500" : "border-red-500"
+          }`}
+          type="text"
+        />
+        {isValid && <p class="my-4">Click the code to copy!</p>}
+        <div class={tw`flex`}>
+          <div class={tw`flex flex-col space-y-1 border p-1 flex-1 mr-4`}>
+            {deck.map(({ card, qty }) => (
               <div
-                class={tw`h-full w-4/12 bg-cover bg-no-repeat bg-right`}
-                style={{
-                  backgroundImage: `url("https://art.hearthstonejson.com/v1/tiles/${card.id}.webp")`,
-                }}
-              ></div>
-            </div>
-          ))}
-        </div>
-        <div>
-          <p class={tw`border-b font-bold`}>Decks to try</p>
-          <ul>
-            {codes.map((c) => (
-              <li
-                onClick={(e) => setCode(c.code)}
-                class={tw`cursor-pointer ${c.code === deckCode && "font-bold"}`}
+                class={tw`h-10 w-full flex items-center text-gray-100 bg-gray-800 hover:bg-gray-600`}
               >
-                {c.name}
-              </li>
+                <p class={tw`font-semibold w-8/12 truncate px-2`}>
+                  {card.name}
+                </p>
+                <p class={tw`pr-2 text-xs`}>x{qty}</p>
+                <div
+                  class={tw`h-full w-4/12 bg-cover bg-no-repeat bg-right`}
+                  style={{
+                    backgroundImage: `url("https://art.hearthstonejson.com/v1/tiles/${card.id}.webp")`,
+                  }}
+                ></div>
+              </div>
             ))}
-          </ul>
+          </div>
+          <div>
+            <p class={tw`border-b font-bold`}>Decks to try</p>
+            <ul>
+              {codes.map((c) => (
+                <li
+                  onClick={(e) => setCode(c.code)}
+                  class={tw`cursor-pointer ${
+                    c.code === deckCode && "font-bold"
+                  }`}
+                >
+                  {c.name}
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
       </div>
     </Fragment>
